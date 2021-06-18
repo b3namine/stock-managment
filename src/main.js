@@ -3,9 +3,14 @@ import App from './App.vue'
 import router from './router'
 import store from './store'
 import Unicon from 'vue-unicons/dist/vue-unicons-vue2.umd'
-import {uniEstate, uniUsersAlt, uniTimes,uniTrashAlt,uniUserPlus,uniEditAlt,uniGrid,uniShoppingBag} from 'vue-unicons/dist/icons'
+import {
+	uniEstate, uniUsersAlt,
+	uniTimes, uniTrashAlt, uniUserPlus, uniEditAlt,
+	uniGrid, uniShoppingBag, uniPlus, uniSearch, uniGraphBar, uniBox
+} from 'vue-unicons/dist/icons'
 
-Unicon.add([uniEstate, uniUsersAlt, uniTimes,uniTrashAlt,uniUserPlus,uniEditAlt,uniGrid,uniShoppingBag]);
+Unicon.add([uniEstate, uniUsersAlt, uniTimes, uniTrashAlt,
+	uniUserPlus, uniEditAlt, uniGrid, uniShoppingBag, uniPlus, uniSearch, uniGraphBar, uniBox]);
 Vue.config.productionTip = false;
 Vue.use(Unicon);
 

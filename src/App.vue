@@ -17,6 +17,11 @@ export default {
       menu: menuItems
     }
   },
+  mounted() {
+    this.$store.dispatch('GET_PRODUCTS');
+    this.$store.dispatch('GET_CLIENTS');
+    this.$store.dispatch('GET_ORDERS');
+  },
   created() {
 
   }

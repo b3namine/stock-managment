@@ -14,5 +14,13 @@ export const menuItems = [
 	{
 		path:'orders',
 		icon:'shopping-bag'
+	},
+	{
+		path:'analysis',
+		icon:'graph-bar'
+	},
+	{
+		path:'stock',
+		icon:'box'
 	}
 ]

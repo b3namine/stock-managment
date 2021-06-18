@@ -2,43 +2,28 @@ import {knex} from '../db/knex';
 
 export const getAllOrders = async (event) => {
 	try {
-		const orders = await knex("ORDERS")
-			.select("ID")
-			.select("PRODUCT_ID")
-			.select("CLIENT_ID")
-			.select("COUNT")
-			.select("CREATED_AT");
-		const values = [];
-		await orders.map(async (order) => {
-			const product = await knex('PRODUCTS')
-				.where('ID', order.PRODUCT_ID)
-				.select("ID")
-				.select("NAME")
-				.select("PRICE")
-				.select("PRICE_BASE")
-				.select("PRICE_GRAU")
-				.select("PRODUCT_NUMBER")
-				.select("UNIT")
-				.select("STOCK")
-				.select("CREATED_AT");
-			const client = await knex('USER')
-				.where('ID', order.CLIENT_ID)
-				.select("ID")
-				.select("NAME")
-				.select("PHONE")
-				.select("EMAIL")
-				.select("BIRTHDAY")
-				.select("CREATED_AT");
-
-			values.push({
-				ID: order.ID,
-				COUNT: order.COUNT,
-				CREATED_AT: order.CREATED_AT,
-				CLIENT: client,
-				PRODUCT: product
-			});
-		});
-		event.returnValue = await values;
+		const orders = await knex('ORDERS')
+			.join('PRODUCTS', 'ORDERS.PRODUCT_ID', '=', 'PRODUCTS.ID')
+			.join('USER', 'ORDERS.CLIENT_ID', '=', 'USER.ID')
+			.select(
+				'ORDERS.ID',
+				'ORDERS.CLIENT_ID',
+				'ORDERS.PRODUCT_ID',
+				'ORDERS.CREATED_AT as ORDER_CREATED_AT',
+				'USER.NAME as CLIENT_NAME',
+				'USER.PHONE',
+				'USER.EMAIL',
+				'USER.BIRTHDAY',
+				'USER.CREATED_AT as CLIENT_CREATED_AT',
+				'PRODUCTS.NAME as PRODUCT_NAME',
+				'PRODUCTS.PRICE',
+				'PRODUCTS.PRICE_BASE',
+				'PRODUCTS.PRICE_GRAU',
+				'PRODUCTS.PRODUCT_NUMBER',
+				'PRODUCTS.UNIT',
+				'PRODUCTS.STOCK',
+				'PRODUCTS.CREATED_AT as PRODUCT_CREATED_AT');
+		event.returnValue = orders.map((order) => beautyJson(order));
 	} catch (err) {
 		console.error(err);
 		event.returnValue = err;
@@ -47,48 +32,38 @@ export const getAllOrders = async (event) => {
 
 export const insertOrder = async (event, data) => {
 	try {
-		const user = JSON.parse(data);
-		const a = await knex.insert(
+		const orderData = JSON.parse(data);
+		const newOrder = await knex.insert(
 			{
-				PRODUCT_ID: user.productId,
-				CLIENT_ID: user.clientId,
-				COUNT: user.email,
+				...orderData,
 				CREATED_AT: new Date().toLocaleString()
 			}
-		).into('ORDERS')
-		const order = await knex('ORDERS')
-			.where('ID', a[0])
-			.select("ID")
-			.select("PRODUCT_ID")
-			.select("CLIENT_ID")
-			.select("COUNT")
-			.select("CREATED_AT");
-		const product = await knex('PRODUCTS')
-			.where('ID', order.PRODUCT_ID)
-			.select("ID")
-			.select("NAME")
-			.select("PRICE")
-			.select("PRICE_BASE")
-			.select("PRICE_GRAU")
-			.select("PRODUCT_NUMBER")
-			.select("UNIT")
-			.select("STOCK")
-			.select("CREATED_AT");
-		const client = await knex('USER')
-			.where('ID', order.CLIENT_ID)
-			.select("ID")
-			.select("NAME")
-			.select("PHONE")
-			.select("EMAIL")
-			.select("BIRTHDAY")
-			.select("CREATED_AT");
-		event.returnValue = {
-			ID: order.ID,
-			CLIENT: client,
-			PRODUCT: product,
-			COUNT: order.COUNT,
-			CREATED_AT: order.CREATED_AT
-		}
+		).into('ORDERS');
+
+		const orders = await knex('ORDERS')
+			.where('ORDERS.ID', newOrder[0])
+			.join('PRODUCTS', 'ORDERS.PRODUCT_ID', '=', 'PRODUCTS.ID')
+			.join('USER', 'ORDERS.CLIENT_ID', '=', 'USER.ID')
+			.select(
+				'ORDERS.ID',
+				'ORDERS.CLIENT_ID',
+				'ORDERS.PRODUCT_ID',
+				'ORDERS.CREATED_AT as ORDER_CREATED_AT',
+				'USER.NAME as CLIENT_NAME',
+				'USER.PHONE',
+				'USER.EMAIL',
+				'USER.BIRTHDAY',
+				'USER.CREATED_AT as CLIENT_CREATED_AT',
+				'PRODUCTS.NAME as PRODUCT_NAME',
+				'PRODUCTS.PRICE',
+				'PRODUCTS.PRICE_BASE',
+				'PRODUCTS.PRICE_GRAU',
+				'PRODUCTS.PRODUCT_NUMBER',
+				'PRODUCTS.UNIT',
+				'PRODUCTS.STOCK',
+				'PRODUCTS.CREATED_AT as PRODUCT_CREATED_AT');
+		event.returnValue = orders.map((order) => beautyJson(order));
+
 	} catch (err) {
 		console.error(err);
 		event.returnValue = err;
@@ -107,15 +82,66 @@ export const deleteOrder = async (event, id) => {
 
 export const editOrder = async (event, data) => {
 	try {
-		const user = JSON.parse(data);
-		event.returnValue = await knex("ORDERS")
-			.where("ID", user.id).update({
-				PRODUCT_ID: user.productId,
-				CLIENT_ID: user.clientId,
-				COUNT: user.count
+		const orderData = JSON.parse(data);
+		await knex("ORDERS")
+			.where("ID", orderData.ID)
+			.update({
+				CLIENT_ID: orderData.CLIENT_ID,
+				PRODUCT_ID: orderData.PRODUCT_ID
 			});
+		const order = await knex('ORDERS')
+			.where('ORDERS.ID', orderData.ID)
+			.join('PRODUCTS', 'ORDERS.PRODUCT_ID', '=', 'PRODUCTS.ID')
+			.join('USER', 'ORDERS.CLIENT_ID', '=', 'USER.ID')
+			.select(
+				'ORDERS.ID',
+				'ORDERS.CLIENT_ID',
+				'ORDERS.PRODUCT_ID',
+				'ORDERS.CREATED_AT as ORDER_CREATED_AT',
+				'USER.NAME as CLIENT_NAME',
+				'USER.PHONE',
+				'USER.EMAIL',
+				'USER.BIRTHDAY',
+				'USER.CREATED_AT as CLIENT_CREATED_AT',
+				'PRODUCTS.NAME as PRODUCT_NAME',
+				'PRODUCTS.PRICE',
+				'PRODUCTS.PRICE_BASE',
+				'PRODUCTS.PRICE_GRAU',
+				'PRODUCTS.PRODUCT_NUMBER',
+				'PRODUCTS.UNIT',
+				'PRODUCTS.STOCK',
+				'PRODUCTS.CREATED_AT as PRODUCT_CREATED_AT');
+		event.returnValue = order.map((order) => beautyJson(order));
+
 	} catch (err) {
 		console.error(err);
 		event.returnValue = err;
+	}
+}
+
+const beautyJson = (json) => {
+	return {
+		ID: json.ID,
+		CLIENT: {
+			ID: json.CLIENT_ID,
+			NAME: json.CLIENT_NAME,
+			PHONE: json.PHONE,
+			EMAIL: json.EMAIL,
+			BIRTHDAY: json.BIRTHDAY,
+			CREATED_AT: json.CLIENT_CREATED_AT
+		},
+		PRODUCT: {
+			ID: json.PRODUCT_ID,
+			NAME: json.PRODUCT_NAME,
+			PRICE: json.PRICE,
+			PRICE_BASE: json.PRICE_BASE,
+			PRICE_GRAU: json.PRICE_GRAU,
+			PRODUCT_NUMBER: json.PRODUCT_NUMBER,
+			UNIT: json.UNIT,
+			STOCK: json.STOCK,
+			CREATED_AT: json.PRODUCT_CREATED_AT,
+		},
+		COUNT: json.COUNT,
+		CREATED_AT: json.ORDER_CREATED_AT,
 	}
 }

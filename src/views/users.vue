@@ -9,6 +9,10 @@
         <unicon name="trash-alt" fill="white" width="16" height="20"/>
         ({{ selected.length }})
       </div>
+      <div class="users-option-list_input">
+        <unicon name="search" fill="black" width="16" height="16"/>
+        <input type="text" v-model="search" placeholder="Search..."/>
+      </div>
     </div>
 
     <table class="users">
@@ -24,13 +28,13 @@
       </tr>
       </thead>
       <tbody>
-      <tr class="users-list" v-for="(row, idx) in data" :key="idx">
+      <tr class="users-list" v-for="(row, idx) in userSearch" :key="idx">
         <td><input type="checkbox" v-model="selected" :value="row.ID"/></td>
         <td class="users-list_item">{{ row.NAME }}</td>
         <td class="users-list_item">{{ row.PHONE }}</td>
         <td class="users-list_item">{{ row.EMAIL }}</td>
         <td class="users-list_item">{{ row.BIRTHDAY }}</td>
-        <td class="users-list_item">{{ dateFormat(row.CREATED_AT) }}</td>
+        <td class="users-list_item">{{ row.CREATED_AT }}</td>
         <td class="users-list_item">
           <div class="users-option-list_item" @click="editClient(row.ID)">
             <unicon name="edit-alt" fill="white" width="16" height="16"/>
@@ -39,11 +43,11 @@
       </tr>
       </tbody>
     </table>
-    <Modal v-show="isModalVisible" @close="modalType = 0; isModalVisible = false;clearClientInfo()">
-      <input type="text" placeholder="name..." v-model="client.name"/>
-      <input type="tel" placeholder="phone..." v-model="client.telephone"/>
-      <input type="email" placeholder="email..." v-model="client.email"/>
-      <input type="date" placeholder="birthday..." v-model="client.birthday"/>
+    <Modal v-show="isModalVisible" @close="modalType = 0; isModalVisible = false;client = {}">
+      <input type="text" placeholder="name..." v-model="client.NAME"/>
+      <input type="tel" placeholder="phone..." v-model="client.PHONE"/>
+      <input type="email" placeholder="email..." v-model="client.EMAIL"/>
+      <input type="date" placeholder="birthday..." v-model="client.BIRTHDAY"/>
       <button @click="modalType === 0 ? insertUser(): saveEditClient()">
         {{ modalType === 0 ? 'add' : 'save' }}
       </button>
@@ -54,98 +58,58 @@
 
 <script>
 import Modal from "../components/modal";
+import {mapGetters} from "vuex";
 
 export default {
   name: "users",
   components: {Modal},
   data() {
     return {
-      data: [{
-        ID: 0, NAME: "dummy", PHONE: "none", EMAIL: "no", BIRTHDAY: 1111, CREATED_AT: 'qsd'
-      }],
-      client: {
-        id: 0,
-        name: '',
-        telephone: '',
-        email: '',
-        birthday: ''
-      },
+      client: {},
       allSelected: false,
       selected: [],
       isModalVisible: false,
       modalType: 0,
+      search: ''
     };
   },
-  mounted() {
-    this.getUserData();
+  computed: {
+    ...mapGetters(['clients']),
+    userSearch() {
+      return this.clients.filter(user => {
+        return user.NAME.toLowerCase().includes(this.search.toLowerCase())
+      })
+    },
   },
   methods: {
-    getUserData() {
-      this.data = window.ipcRenderer.sendSync("get-user-data", null).sort((a, b) => b.ID - a.ID);
-    },
     insertUser() {
-      const newUser = window.ipcRenderer.sendSync('insert-new-client', JSON.stringify(this.client))[0];
-      this.data.unshift(newUser);
+      this.$store.dispatch('NEW_CLIENT', this.client);
       this.isModalVisible = false;
-      this.clearClientInfo();
+      this.client = {};
     },
     selectAll() {
       this.selected = [];
-
       if (!this.allSelected) {
-        this.data.map((client) => {
+        this.clients.map((client) => {
           this.selected.push(client.ID);
         });
       }
     },
     deleteUsers() {
-      this.selected.map((userId) => {
-        const response = window.ipcRenderer.sendSync('delete-client', userId);
-        this.data = [...this.data.filter((user) => user.ID !== response)];
-        this.selected = [...this.selected.filter((id) => id !== userId)];
-      });
-    },
-    dateFormat(date) {
-      const newDate = new Date(date);
-      if (!newDate) {
-        return '_';
-      }
-      return `${newDate.getDate()}-${newDate.getMonth()}-${newDate.getFullYear()}`
+      this.$store.dispatch('DELETE_CLIENT', this.selected);
+      this.selected = [];
     },
     editClient(id) {
       this.modalType = 1;
       this.isModalVisible = true;
-      const client = this.data.filter((user) => user.ID === id)[0];
-      this.client.id = client.ID;
-      this.client.name = client.NAME;
-      this.client.email = client.EMAIL;
-      this.client.telephone = client.PHONE;
-      this.client.birthday = client.BIRTHDAY;
+      const client = this.clients.filter((client) => client.ID === id)[0];
+      Object.keys(client).map(key => this.client[key] = client[key]);
     },
     saveEditClient() {
-      const response = window.ipcRenderer.sendSync('edit-client', JSON.stringify(this.client));
-      if (response === 1) {
-        this.data = [...this.data.map(client => this.client.id === client.ID
-            ? {
-              ID: this.client.id,
-              NAME: this.client.name,
-              PHONE: this.client.telephone,
-              EMAIL: this.client.email,
-              BIRTHDAY: this.client.birthday,
-              CREATED_AT: client.CREATED_AT
-            }
-            : client)];
-      }
+      this.$store.dispatch('EDIT_CLIENT', this.client);
       this.isModalVisible = false;
-      this.clearClientInfo();
-    },
-    clearClientInfo() {
-      this.client.name = '';
-      this.client.email = '';
-      this.client.telephone = '';
-      this.client.birthday = '';
+      this.client = {};
     }
-
   }
 }
 </script>
@@ -206,10 +170,14 @@ export default {
 .users-option-list {
   display: flex;
   flex-direction: row;
+  align-items: center;
+  align-content: center;
 }
-.users-option-list .users-option-list_item{
+
+.users-option-list .users-option-list_item {
   margin: 0 10px;
 }
+
 .users-option-list_item {
   padding: 10px 15px;
   width: fit-content;
@@ -227,6 +195,28 @@ export default {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+}
+
+.users-option-list_input {
+  width: fit-content;
+  align-content: center;
+  align-items: center;
+  font-size: 16px;
+  display: flex;
+  border: 1px solid black;
+  line-height: 11px;
+  border-radius: 6px;
+}
+
+.users-option-list_input .unicon {
+  margin: 0 5px;
+}
+
+.users-option-list_input input {
+  padding: 13px 0;
+  outline: none;
+  border: none;
+  margin-right: 5px;
 }
 
 .users-option-list_item:hover {

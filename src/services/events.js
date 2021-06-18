@@ -33,7 +33,6 @@ ipcMain.on('delete-product', async (event, id) => {
 	await deleteProduct(event, id);
 });
 ipcMain.on('edit-product', async (event, data) => {
-	console.log(data);
 	await editProduct(event, data);
 });
 
@@ -49,7 +48,6 @@ ipcMain.on('delete-order', async (event, id) => {
 	await deleteOrder(event, id);
 });
 ipcMain.on('edit-order', async (event, data) => {
-	console.log(data);
 	await editOrder(event, data);
 });
 

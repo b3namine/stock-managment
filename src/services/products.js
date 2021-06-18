@@ -3,15 +3,7 @@ import {knex} from '../db/knex';
 export const getAllProducts = async (event) => {
 	try {
 		event.returnValue = await knex("PRODUCTS")
-			.select("ID")
-			.select("NAME")
-			.select("PRICE")
-			.select("PRICE_BASE")
-			.select("PRICE_GRAU")
-			.select("PRODUCT_NUMBER")
-			.select("UNIT")
-			.select("STOCK")
-			.select("CREATED_AT");
+			.select("*");
 	} catch (err) {
 		console.error(err);
 		event.returnValue = err;
@@ -20,31 +12,17 @@ export const getAllProducts = async (event) => {
 
 export const insertProduct = async (event, data) => {
 	try {
-		const user = JSON.parse(data);
-		const a = await knex.insert(
+		const product = JSON.parse(data);
+		const newProductId = await knex.insert(
 			{
-				NAME: user.name,
-				PRICE: user.price,
-				PRICE_BASE: user.priceBase,
-				PRICE_GRAU: user.priceGrau,
-				PRODUCT_NUMBER: user.productNumber,
-				UNIT: user.unit,
-				STOCK: user.stock,
+				...product,
 				CREATED_AT: new Date().toLocaleString()
 			}
-		).into('PRODUCTS')
+		).into('PRODUCTS');
 
 		event.returnValue = await knex('PRODUCTS')
-			.where('ID', a[0])
-			.select("ID")
-			.select("NAME")
-			.select("PRICE")
-			.select("PRICE_BASE")
-			.select("PRICE_GRAU")
-			.select("PRODUCT_NUMBER")
-			.select("UNIT")
-			.select("STOCK")
-			.select("CREATED_AT");
+			.where('ID', newProductId[0])
+			.select("*");
 	} catch (err) {
 		console.error(err);
 		event.returnValue = err;
@@ -63,17 +41,9 @@ export const deleteProduct = async (event, id) => {
 
 export const editProduct = async (event, data) => {
 	try {
-		const user = JSON.parse(data);
+		const product = JSON.parse(data);
 		event.returnValue = await knex("PRODUCTS")
-			.where("ID", user.id).update({
-				NAME: user.name,
-				PRICE: user.price,
-				PRICE_BASE: user.priceBase,
-				PRICE_GRAU: user.priceGrau,
-				PRODUCT_NUMBER: user.productNumber,
-				UNIT: user.unit,
-				STOCK: user.stock
-			});
+			.where("ID", product.ID).update(product);
 	} catch (err) {
 		console.error(err);
 		event.returnValue = err;
