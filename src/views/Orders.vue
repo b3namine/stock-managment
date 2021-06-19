@@ -1,47 +1,63 @@
 <template>
   <div class="orders-container">
-    <div class="orders-option-list">
-      <div class="orders-option-list_item" @click="isModalVisible = true">
-        <unicon name="plus" fill="white"/>
+    <div class="orders-option_items">
+      <div>
+        <el-button type="primary" icon="el-icon-plus" @click="isModalVisible = true;errors = [];"> Add order</el-button>
       </div>
-      <div :class="selected.length === 0?'orders-option-list_item button_disabled' : 'orders-option-list_item'"
-           @click="deleteOrders">
-        <unicon name="trash-alt" fill="white" width="16" height="20"/>
-        ({{ selected.length }})
+      <div v-if="selected.length > 0">
+        <el-button type="danger" icon="el-icon-delete" @click="deleteOrders">({{ selected.length }})</el-button>
       </div>
-      <div class="orders-option-list_input">
-        <unicon name="search" fill="black" width="16" height="16"/>
-        <input type="text" v-model="search" placeholder="Search..."/>
+      <div>
+        <el-input
+            placeholder="Search..."
+            prefix-icon="el-icon-search"
+            v-model="search">
+        </el-input>
       </div>
     </div>
-    <table class="orders">
-      <thead>
-      <tr class="orders-header">
-        <th><input type="checkbox" @click="selectAll" v-model="allSelected"/></th>
-        <th>Product name</th>
-        <th>Client name</th>
-        <th>Count</th>
-        <th>Date</th>
-        <th>Options</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr class="orders-list" v-for="(row, idx) in orderSearch" :key="idx">
-        <td><input type="checkbox" v-model="selected" :value="row.ID"/></td>
-        <td class="orders-list_item">{{ row.PRODUCT.NAME }}</td>
-        <td class="orders-list_item">{{ row.CLIENT.NAME }}</td>
-        <td class="orders-list_item">{{ row.COUNT }}</td>
-        <td class="orders-list_item">{{ row.CREATED_AT }}</td>
-        <td class="orders-list_item">
-          <div class="orders-option-list_item" @click="editOrder(row.ID)">
-            <unicon name="edit-alt" fill="white" width="16" height="16"/>
-          </div>
-        </td>
-      </tr>
-      </tbody>
-    </table>
+    <el-table
+        :data="orderSearch"
+        stripe
+        style="width: 100%"
+        @selection-change="handleSelectionChange">
+      <el-table-column
+          type="selection"
+          width="55">
+      </el-table-column>
+      <el-table-column
+          prop="CREATED_AT"
+          label="Date">
+      </el-table-column>
+      <el-table-column
+          prop="PRODUCT.NAME"
+          label="Product name">
+      </el-table-column>
+      <el-table-column
+          prop="CLIENT.NAME"
+          label="Client name">
+      </el-table-column>
+      <el-table-column
+          prop="COUNT"
+          label="Count">
+      </el-table-column>
 
+      <el-table-column
+          fixed="right"
+          label="Operations">
+        <template slot-scope="scope">
+          <el-button
+              @click.native.prevent="editOrder(scope.row.ID,orderSearch)"
+              type="text"
+              size="small">
+            Edit
+          </el-button>
+        </template>
+      </el-table-column>
+    </el-table>
     <Modal v-show="isModalVisible" @close="modalType = 0; isModalVisible = false;order = {}">
+      <div v-if="errors.length > 0">
+        <div v-for="(error,key) in errors" :key="key">{{ error }}</div>
+      </div>
       <select v-model="order.CLIENT_ID">
         <option v-for="(client ,key) in clients"
                 :key="key"
@@ -51,6 +67,7 @@
         </option>
       </select>
       <input type="number" placeholder="Product id..." v-model="order.PRODUCT_ID"/>
+      <input type="number" placeholder="Count..." v-model="order.COUNT"/>
       <button @click="modalType === 0 ? insertOrder(): saveEditOrder()">
         {{ modalType === 0 ? 'add' : 'save' }}
       </button>
@@ -68,12 +85,17 @@ export default {
   components: {Modal},
   data() {
     return {
-      order: {},
+      order: {
+        PRODUCT_ID: '',
+        CLIENT_ID: '',
+        COUNT: ''
+      },
       allSelected: false,
       selected: [],
       isModalVisible: false,
       modalType: 0,
       search: '',
+      errors: []
     };
   },
   computed: {
@@ -86,35 +108,52 @@ export default {
     },
   },
   methods: {
+    handleSelectionChange(selected) {
+      this.selected = selected.map((select)=> select.ID);
+    },
     insertOrder() {
+      if (!this.checkForm()) {
+        return;
+      }
       this.$store.dispatch('NEW_ORDER', this.order);
       this.isModalVisible = false;
       this.order = {};
-    },
-    selectAll() {
-      this.selected = [];
-      if (!this.allSelected) {
-        this.orders.map((product) => {
-          this.selected.push(product.ID);
-        });
-      }
     },
     deleteOrders() {
       this.$store.dispatch('DELETE_ORDER', this.selected);
       this.selected = [];
     },
     editOrder(id) {
+      console.log(id);
       this.modalType = 1;
       this.isModalVisible = true;
+      this.errors = [];
       const order = this.orders.filter((order) => order.ID === id)[0];
       this.order.ID = order.ID;
       this.order.CLIENT_ID = order.CLIENT.ID;
       this.order.PRODUCT_ID = order.PRODUCT.ID;
+      this.order.COUNT = order.COUNT;
     },
     saveEditOrder() {
+      if (!this.checkForm()) {
+        return;
+      }
       this.$store.dispatch('EDIT_ORDER', this.order);
       this.isModalVisible = false;
       this.order = {};
+    },
+    checkForm() {
+      this.errors = [];
+      const requireText = {
+        PRODUCT_ID: 'Product id field required',
+        CLIENT_ID: 'Client id field required',
+        COUNT: 'Count field required'
+      }
+      if (!this.order.CLIENT_ID || !this.order.PRODUCT_ID || !this.order.COUNT) {
+        const keys = Object.keys(this.order).filter((key) => this.order[key] === '');
+        this.errors = keys.map((require) => requireText[require]);
+      }
+      return !this.errors.length > 0;
     }
   }
 }
@@ -133,53 +172,17 @@ export default {
 }
 
 
-.orders {
-  border-collapse: collapse;
-  border-radius: 8px;
-  overflow: hidden;
-  margin: 25px 0;
-  font-size: 0.9em;
-  font-family: sans-serif;
-  min-width: 400px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
-  width: 100%;
-}
-
-.orders thead tr {
-  background-color: #000;
-  color: #ffffff;
-  border-radius: 8px;
-  text-align: center;
-}
-
-.orders th,
-.orders td {
-  padding: 12px 15px;
-}
-
-.orders tbody tr {
-  border-bottom: 1px solid #dddddd;
-}
-
-.orders tbody tr:nth-of-type(even) {
-  background-color: #f3f3f3;
-}
-
-.orders tbody tr:last-of-type {
-  border-bottom: 2px solid #000;
-}
-
-.orders tbody tr.active-row {
-  font-weight: bold;
-  color: #000;
-}
-
+.orders-option_items,
 .orders-option-list {
   display: flex;
   flex-direction: row;
   align-items: center;
   align-content: center;
 
+}
+
+.orders-option_items div {
+  margin-right: 10px;
 }
 
 .orders-option-list .orders-option-list_item {

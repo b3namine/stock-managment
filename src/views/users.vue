@@ -1,48 +1,58 @@
 <template>
   <div class="users-container">
-    <div class="users-option-list">
-      <div class="users-option-list_item" @click="isModalVisible = true">
-        <unicon name="user-plus" fill="white"/>
-      </div>
-      <div :class="selected.length === 0?'users-option-list_item button_disabled' : 'users-option-list_item'"
-           @click="deleteUsers">
-        <unicon name="trash-alt" fill="white" width="16" height="20"/>
-        ({{ selected.length }})
-      </div>
-      <div class="users-option-list_input">
-        <unicon name="search" fill="black" width="16" height="16"/>
-        <input type="text" v-model="search" placeholder="Search..."/>
-      </div>
+    <div class="users-option_items">
+      <div><el-button type="primary" icon="el-icon-plus"  @click="isModalVisible = true"> Add user</el-button></div>
+      <div v-if="selected.length > 0"><el-button  type="danger" icon="el-icon-delete" @click="deleteUsers">({{ selected.length }})</el-button></div>
+      <div><el-input
+          placeholder="Search..."
+          prefix-icon="el-icon-search"
+          v-model="search">
+      </el-input></div>
     </div>
 
-    <table class="users">
-      <thead>
-      <tr class="products-header">
-        <th><input type="checkbox" @click="selectAll" v-model="allSelected"/></th>
-        <th>Name</th>
-        <th>Phone</th>
-        <th>Email</th>
-        <th>Birthday</th>
-        <th>Date</th>
-        <th>Options</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr class="users-list" v-for="(row, idx) in userSearch" :key="idx">
-        <td><input type="checkbox" v-model="selected" :value="row.ID"/></td>
-        <td class="users-list_item">{{ row.NAME }}</td>
-        <td class="users-list_item">{{ row.PHONE }}</td>
-        <td class="users-list_item">{{ row.EMAIL }}</td>
-        <td class="users-list_item">{{ row.BIRTHDAY }}</td>
-        <td class="users-list_item">{{ row.CREATED_AT }}</td>
-        <td class="users-list_item">
-          <div class="users-option-list_item" @click="editClient(row.ID)">
-            <unicon name="edit-alt" fill="white" width="16" height="16"/>
-          </div>
-        </td>
-      </tr>
-      </tbody>
-    </table>
+    <el-table
+        :data="userSearch"
+        stripe
+        style="width: 100%"
+        @selection-change="handleSelectionChange">
+      <el-table-column
+          type="selection"
+          width="55">
+      </el-table-column>
+      <el-table-column
+          prop="NAME"
+          label="Name">
+      </el-table-column>
+      <el-table-column
+          prop="PHONE"
+          label="Phone">
+      </el-table-column>
+      <el-table-column
+          prop="EMAIL"
+          label="Email">
+      </el-table-column>
+      <el-table-column
+          prop="BIRTHDAY"
+          label="Birthday">
+      </el-table-column>
+      <el-table-column
+          prop="CREATED_AT"
+          label="Date">
+      </el-table-column>
+
+      <el-table-column
+          fixed="right"
+          label="Operations">
+        <template slot-scope="scope">
+          <el-button
+              @click.native.prevent="editClient(scope.row.ID,userSearch)"
+              type="text"
+              size="small">
+            Edit
+          </el-button>
+        </template>
+      </el-table-column>
+    </el-table>
     <Modal v-show="isModalVisible" @close="modalType = 0; isModalVisible = false;client = {}">
       <input type="text" placeholder="name..." v-model="client.NAME"/>
       <input type="tel" placeholder="phone..." v-model="client.PHONE"/>
@@ -82,18 +92,13 @@ export default {
     },
   },
   methods: {
+    handleSelectionChange(selected) {
+      this.selected = selected.map((select)=> select.ID);
+    },
     insertUser() {
       this.$store.dispatch('NEW_CLIENT', this.client);
       this.isModalVisible = false;
       this.client = {};
-    },
-    selectAll() {
-      this.selected = [];
-      if (!this.allSelected) {
-        this.clients.map((client) => {
-          this.selected.push(client.ID);
-        });
-      }
     },
     deleteUsers() {
       this.$store.dispatch('DELETE_CLIENT', this.selected);
@@ -166,12 +171,15 @@ export default {
   font-weight: bold;
   color: #000;
 }
-
+.users-option_items,
 .users-option-list {
   display: flex;
   flex-direction: row;
   align-items: center;
   align-content: center;
+}
+.users-option_items div{
+  margin-right: 10px;
 }
 
 .users-option-list .users-option-list_item {

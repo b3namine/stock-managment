@@ -1,26 +1,27 @@
 export const menuItems = [
 	{
 		path:'home',
-		icon:'estate'
+		icon:'el-icon-s-home'
 	},
 	{
 		path:'users',
-		icon:'users-alt'
+		icon:'el-icon-user-solid'
 	},
 	{
 		path:'products',
-		icon:'grid'
+		icon:'el-icon-refrigerator'
 	},
 	{
 		path:'orders',
-		icon:'shopping-bag'
-	},
-	{
-		path:'analysis',
-		icon:'graph-bar'
+		icon:'el-icon-goods'
 	},
 	{
 		path:'stock',
-		icon:'box'
+		icon:'el-icon-box'
+	},
+	{
+		path:'analysis',
+		icon:'el-icon-s-data'
 	}
+
 ]

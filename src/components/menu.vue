@@ -1,7 +1,7 @@
 <template>
   <div class="menu">
-    <router-link v-for="(item,key) in items" :key="key" :to="{ path: item.path }">
-      <unicon :name="item.icon" fill="white"/>
+    <router-link v-for="(item,key) in items" :key="key" :to="{ path: item.path }" tag="div">
+      <el-button :icon="item.icon" circle></el-button>
     </router-link>
   </div>
 </template>
@@ -20,18 +20,14 @@ export default {
   margin-right: 10px;
 }
 
-.menu a div {
-  padding: 10px 13px;
-  border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.64);
+.menu div {
   margin: 5px 2px;
 }
 
-.menu a.router-link-exact-active.router-link-active div {
-  background-color: rgba(0, 0, 0, 1);
+.menu div.router-link-exact-active.router-link-active button.el-button--default {
+  background: #66b1ff;
+  border-color: #66b1ff;
+  color: #FFF;
 }
 
-.menu a:hover div {
-  background-color: rgba(0, 0, 0, 1);
-}
 </style>

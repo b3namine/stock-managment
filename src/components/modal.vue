@@ -45,7 +45,7 @@ export default {
 
 .modal-container {
   position: absolute;
-  top: 20%;
+  top: 50%;
   left: 50%;
   right: 50%;
   max-width: 500px;

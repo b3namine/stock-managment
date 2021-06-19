@@ -19,7 +19,7 @@ const mutations = {
 		state.orders = [...state.orders.map((order) => payload.ID === order.ID
 			? payload
 			: order)];
-		console.log(state.orders);
+
 	},
 	DELETE_ORDER: (state, payload) => {
 		state.orders = [...state.orders.filter((order) => order.ID !== payload)];

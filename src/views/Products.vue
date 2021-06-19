@@ -1,62 +1,92 @@
 <template>
   <div class="products-container">
-    <div class="products-option-list">
-      <div class="products-option-list_item" @click="isModalVisible = true">
-        <unicon name="plus" fill="white"/>
-      </div>
-      <div :class="selected.length === 0?'products-option-list_item button_disabled' : 'products-option-list_item'"
-           @click="deleteProducts">
-        <unicon name="trash-alt" fill="white" width="16" height="20"/>
-        ({{ selected.length }})
-      </div>
-      <div class="products-option-list_input">
-        <unicon name="search" fill="black" width="16" height="16"/>
-        <input type="text" v-model="search" placeholder="Search..."/>
-      </div>
+    <div class="products-option_items">
+      <div><el-button type="primary" icon="el-icon-plus"  @click="isModalVisible = true"> Add product</el-button></div>
+      <div v-if="selected.length > 0"><el-button type="danger" icon="el-icon-delete" @click="deleteProducts">({{ selected.length }})</el-button></div>
+      <div><el-input
+          placeholder="Search..."
+          prefix-icon="el-icon-search"
+          v-model="search">
+      </el-input></div>
     </div>
-    <table class="products">
-      <thead>
-      <tr class="products-header">
-        <th><input type="checkbox" @click="selectAll" v-model="allSelected"/></th>
-        <th>Name</th>
-        <th>prix de base</th>
-        <th>prix de gros</th>
-        <th>Prix de detail</th>
-        <th>Unit</th>
-        <th>Stock</th>
-        <th>Product number</th>
-        <th>Date</th>
-        <th>Options</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr class="products-list" v-for="(row, idx) in productSearch" :key="idx">
-        <td><input type="checkbox" v-model="selected" :value="row.ID"/></td>
-        <td class="products-list_item">{{ row.NAME }}</td>
-        <td class="products-list_item">{{ row.PRICE_BASE }}</td>
-        <td class="products-list_item">{{ row.PRICE_GRAU }}</td>
-        <td class="products-list_item">{{ row.PRICE }}</td>
-        <td class="products-list_item">{{ row.UNIT }}</td>
-        <td class="products-list_item">{{ row.STOCK }}</td>
-        <td class="products-list_item">{{ row.PRODUCT_NUMBER }}</td>
-        <td class="products-list_item">{{ row.CREATED_AT }}</td>
-        <td class="products-list_item">
-          <div class="products-option-list_item" @click="editProduct(row.ID)">
-            <unicon name="edit-alt" fill="white" width="16" height="16"/>
-          </div>
-        </td>
-      </tr>
-      </tbody>
-    </table>
+
+    <el-table
+        :data="productSearch"
+        stripe
+        style="width: 100%"
+        @selection-change="handleSelectionChange">
+      <el-table-column
+          type="selection"
+          width="55">
+      </el-table-column>
+      <el-table-column
+          prop="NAME"
+          label="Name">
+      </el-table-column>
+      <el-table-column
+          prop="PRICE_BASE"
+          label="Price base">
+      </el-table-column>
+      <el-table-column
+          prop="PRICE_GRAU"
+          label="Price grou">
+      </el-table-column>
+      <el-table-column
+          prop="PRICE"
+          label="Price">
+      </el-table-column>
+      <el-table-column
+          prop="UNIT"
+          label="Unit">
+      </el-table-column>
+      <el-table-column
+          prop="STOCK"
+          label="Stock">
+      </el-table-column>
+      <el-table-column
+          prop="PRODUCT_NUMBER"
+          label="Product number">
+      </el-table-column>
+      <el-table-column
+          prop="CREATED_AT"
+          label="Date">
+      </el-table-column>
+      <el-table-column
+          fixed="right"
+          label="Operations">
+        <template slot-scope="scope">
+          <el-button
+              @click.native.prevent="editProduct(scope.row.ID,productSearch)"
+              type="text"
+              size="small">
+            Edit
+          </el-button>
+        </template>
+      </el-table-column>
+    </el-table>
 
     <Modal v-show="isModalVisible" @close="modalType = 0; isModalVisible = false;product = {}">
-      <input type="text" placeholder="name..." v-model="product.NAME"/>
-      <input type="tel" placeholder="Price..." v-model="product.PRICE"/>
-      <input type="text" placeholder="Price base ..." v-model="product.PRICE_BASE"/>
-      <input type="text" placeholder="Price gros..." v-model="product.PRICE_GRAU"/>
-      <input type="text" placeholder="Unit..." v-model="product.UNIT"/>
-      <input type="text" placeholder="Stock..." v-model="product.STOCK"/>
-      <input type="text" placeholder="Product number..." v-model="product.PRODUCT_NUMBER"/>
+      <div class="products-option-list_input">
+        <input type="text" v-model="product.NAME" placeholder="name..."/>
+      </div>
+      <div class="products-option-list_input">
+        <input type="text" v-model="product.PRICE" placeholder="Price..."/>
+      </div>
+      <div class="products-option-list_input">
+        <input type="text" v-model="product.PRICE_BASE" placeholder="Price base..."/>
+      </div>
+      <div class="products-option-list_input">
+        <input type="text" v-model="product.PRICE_GRAU" placeholder="Price gros..."/>
+      </div>
+      <div class="products-option-list_input">
+        <input type="text" v-model="product.UNIT" placeholder="Unit..."/>
+      </div>
+      <div class="products-option-list_input">
+        <input type="text" v-model="product.STOCK" placeholder="Stock..."/>
+      </div>
+      <div class="products-option-list_input">
+        <input type="text" v-model="product.PRODUCT_NUMBER" placeholder="Product number..."/>
+      </div>
       <button @click="modalType === 0 ? insertProduct(): saveEditProduct()">
         {{ modalType === 0 ? 'add' : 'save' }}
       </button>
@@ -92,18 +122,13 @@ export default {
     },
   },
   methods: {
+    handleSelectionChange(selected) {
+      this.selected = selected.map((select)=> select.ID);
+    },
     insertProduct() {
       this.$store.dispatch('NEW_PRODUCT', this.product);
       this.isModalVisible = false;
       this.product = {};
-    },
-    selectAll() {
-      this.selected = [];
-      if (!this.allSelected) {
-        this.products.map((product) => {
-          this.selected.push(product.ID);
-        });
-      }
     },
     deleteProducts() {
       this.$store.dispatch('DELETE_PRODUCT', this.selected);
@@ -129,65 +154,19 @@ export default {
   padding: 20px 0;
   width: calc(100% - 90px);
 }
-
+.products-option_items{
+  display: flex;
+}
+.products-option_items,
 .products-list_item {
   text-align: center;
   align-items: center;
   align-content: center;
 }
-
-
-.products {
-  border-collapse: collapse;
-  border-radius: 8px;
-  overflow: hidden;
-  margin: 25px 0;
-  font-size: 0.9em;
-  font-family: sans-serif;
-  min-width: 400px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
-  width: 100%;
+.products-option_items > div{
+  margin-right: 10px;
 }
 
-.products thead tr {
-  background-color: #000;
-  color: #ffffff;
-  border-radius: 8px;
-  text-align: center;
-}
-
-.products th,
-.products td {
-  padding: 12px 15px;
-}
-
-.products tbody tr {
-  border-bottom: 1px solid #dddddd;
-}
-
-.products tbody tr:nth-of-type(even) {
-  background-color: #f3f3f3;
-}
-
-.products tbody tr:last-of-type {
-  border-bottom: 2px solid #000;
-}
-
-.products tbody tr.active-row {
-  font-weight: bold;
-  color: #000;
-}
-
-.products-option-list {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  align-content: center;
-}
-
-.products-option-list .products-option-list_item {
-  margin: 0 10px;
-}
 
 .products-option-list_input {
   width: fit-content;
@@ -205,10 +184,10 @@ export default {
 }
 
 .products-option-list_input input {
-  padding: 13px 0;
+  padding: 13px 0px;
   outline: none;
   border: none;
-  margin-right: 5px;
+  margin: 0 5px;
 }
 
 .products-option-list_item {
