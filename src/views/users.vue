@@ -21,21 +21,26 @@
       </el-table-column>
       <el-table-column
           prop="NAME"
+          min-width="100"
           label="Name">
       </el-table-column>
       <el-table-column
           prop="PHONE"
+          min-width="100"
           label="Phone">
       </el-table-column>
       <el-table-column
           prop="EMAIL"
+          min-width="110"
           label="Email">
       </el-table-column>
       <el-table-column
           prop="BIRTHDAY"
+          min-width="100"
           label="Birthday">
       </el-table-column>
       <el-table-column
+          min-width="150"
           prop="CREATED_AT"
           label="Date">
       </el-table-column>

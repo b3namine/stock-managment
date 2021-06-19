@@ -26,7 +26,8 @@
       </el-table-column>
       <el-table-column
           prop="CREATED_AT"
-          label="Date">
+          label="Date"
+          min-width="150">
       </el-table-column>
       <el-table-column
           prop="PRODUCT.NAME"

@@ -41,13 +41,18 @@
       </el-table-column>
       <el-table-column
           prop="STOCK"
+          :filters="[{ text: '< 3', value: '3' }, { text: '< 5', value: '5' }]"
+          :filter-method="filterTag"
+          filter-placement="bottom-end"
           label="Stock">
       </el-table-column>
       <el-table-column
+          min-width="150"
           prop="PRODUCT_NUMBER"
           label="Product number">
       </el-table-column>
       <el-table-column
+          min-width="150"
           prop="CREATED_AT"
           label="Date">
       </el-table-column>
@@ -122,6 +127,9 @@ export default {
     },
   },
   methods: {
+    filterTag(value, row) {
+      return row.STOCK < value;
+    },
     handleSelectionChange(selected) {
       this.selected = selected.map((select)=> select.ID);
     },
