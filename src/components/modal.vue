@@ -1,23 +1,31 @@
 <template>
-  <transition name="modal-fade">
-    <div class="modal-background">
-      <div class="modal-background"></div>
-      <div class="modal-container">
-        <div class="modal-close-btn" @click="close">
-          <unicon name="times" fill="black"/>
-        </div>
-        <div class="modal-content">
-          <slot></slot>
-        </div>
-      </div>
-    </div>
-  </transition>
+<!--  <transition name="modal-fade">-->
+<!--    <div class="modal-background">-->
+<!--      <div class="modal-background"></div>-->
+<!--      <div class="modal-container">-->
+<!--        <div class="modal-close-btn" @click="close">-->
+<!--          <unicon name="times" fill="black"/>-->
+<!--        </div>-->
+<!--        <div class="modal-content">-->
+<!--          <slot></slot>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--  </transition>-->
+  <el-dialog
+      :title="title"
+      :visible.sync="model"
+      width="30%"
+      :before-close="close">
+    <slot></slot>
+  </el-dialog>
 
 </template>
 
 <script>
 export default {
   name: "Modal",
+  props:['model','title'],
   methods:{
     close() {
       this.$emit('close');

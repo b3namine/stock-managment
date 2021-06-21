@@ -1,15 +1,21 @@
 <template>
+
   <div class="products-container">
     <div class="products-option_items">
-      <div><el-button type="primary" icon="el-icon-plus"  @click="isModalVisible = true"> Add product</el-button></div>
-      <div v-if="selected.length > 0"><el-button type="danger" icon="el-icon-delete" @click="deleteProducts">({{ selected.length }})</el-button></div>
-      <div><el-input
-          placeholder="Search..."
-          prefix-icon="el-icon-search"
-          v-model="search">
-      </el-input></div>
+      <div>
+        <el-button type="primary" icon="el-icon-plus" @click="isModalVisible = true"> Add product</el-button>
+      </div>
+      <div v-if="selected.length > 0">
+        <el-button type="danger" icon="el-icon-delete" @click="deleteProducts">({{ selected.length }})</el-button>
+      </div>
+      <div>
+        <el-input
+            placeholder="Search..."
+            prefix-icon="el-icon-search"
+            v-model="search">
+        </el-input>
+      </div>
     </div>
-
     <el-table
         :data="productSearch"
         stripe
@@ -69,32 +75,42 @@
         </template>
       </el-table-column>
     </el-table>
+    <Modal :model="isModalVisible"
+           :title="modalType === 0 ? 'Add new product' : 'Edit product'"
+           @close="closeModal">
+      <div v-if="errors.length > 0">
+        <div v-for="(error,key) in errors" :key="key">{{ error }}</div>
+      </div>
+      <el-form ref="product" :model="product" label-width="120px">
+        <el-form-item label="Product name">
+          <el-input v-model="product.NAME"></el-input>
+        </el-form-item>
+        <el-form-item label="Product price">
+          <el-input v-model="product.PRICE"></el-input>
+        </el-form-item>
+        <el-form-item label="Product price base">
+          <el-input v-model="product.PRICE_BASE"></el-input>
+        </el-form-item>
+        <el-form-item label="Product price grou">
+          <el-input v-model="product.PRICE_GRAU"></el-input>
+        </el-form-item>
+        <el-form-item label="Product unit">
+          <el-input v-model="product.UNIT"></el-input>
+        </el-form-item>
+        <el-form-item label="Product stock">
+          <el-input v-model="product.STOCK"></el-input>
+        </el-form-item>
+        <el-form-item label="Product number">
+          <el-input v-model="product.PRODUCT_NUMBER"></el-input>
+        </el-form-item>
 
-    <Modal v-show="isModalVisible" @close="modalType = 0; isModalVisible = false;product = {}">
-      <div class="products-option-list_input">
-        <input type="text" v-model="product.NAME" placeholder="name..."/>
-      </div>
-      <div class="products-option-list_input">
-        <input type="text" v-model="product.PRICE" placeholder="Price..."/>
-      </div>
-      <div class="products-option-list_input">
-        <input type="text" v-model="product.PRICE_BASE" placeholder="Price base..."/>
-      </div>
-      <div class="products-option-list_input">
-        <input type="text" v-model="product.PRICE_GRAU" placeholder="Price gros..."/>
-      </div>
-      <div class="products-option-list_input">
-        <input type="text" v-model="product.UNIT" placeholder="Unit..."/>
-      </div>
-      <div class="products-option-list_input">
-        <input type="text" v-model="product.STOCK" placeholder="Stock..."/>
-      </div>
-      <div class="products-option-list_input">
-        <input type="text" v-model="product.PRODUCT_NUMBER" placeholder="Product number..."/>
-      </div>
-      <button @click="modalType === 0 ? insertProduct(): saveEditProduct()">
-        {{ modalType === 0 ? 'add' : 'save' }}
-      </button>
+        <el-form-item>
+          <el-button type="primary" @click="modalType === 0 ? insertProduct(): saveEditProduct()">
+            {{ modalType === 0 ? 'Add' : 'Save' }}
+          </el-button>
+          <el-button @click="closeModal">Cancel</el-button>
+        </el-form-item>
+      </el-form>
     </Modal>
   </div>
 
@@ -109,12 +125,21 @@ export default {
   components: {Modal},
   data() {
     return {
-      product: {},
+      product: {
+        NAME: '',
+        PRICE: '',
+        PRICE_GRAU: '',
+        PRICE_BASE: '',
+        STOCK: '',
+        UNIT: '',
+        PRODUCT_NUMBER: '',
+      },
       allSelected: false,
       selected: [],
       isModalVisible: false,
       modalType: 0,
-      search: ''
+      search: '',
+      errors: []
     };
   },
   computed: {
@@ -130,10 +155,18 @@ export default {
     filterTag(value, row) {
       return row.STOCK < value;
     },
+    closeModal() {
+      this.modalType = 0;
+      this.isModalVisible = false;
+      this.product = {}
+    },
     handleSelectionChange(selected) {
-      this.selected = selected.map((select)=> select.ID);
+      this.selected = selected.map((select) => select.ID);
     },
     insertProduct() {
+      if (!this.checkForm()) {
+        return;
+      }
       this.$store.dispatch('NEW_PRODUCT', this.product);
       this.isModalVisible = false;
       this.product = {};
@@ -149,9 +182,30 @@ export default {
       Object.keys(product).map(key => this.product[key] = product[key]);
     },
     saveEditProduct() {
+      if (!this.checkForm()) {
+        return;
+      }
       this.$store.dispatch('EDIT_PRODUCT', this.product);
       this.isModalVisible = false;
       this.product = {};
+    },
+    checkForm() {
+      this.errors = [];
+      const requireText = {
+        NAME: 'Name field empty',
+        PRICE: 'Price field empty',
+        PRICE_GRAU: 'Price grou field empty',
+        PRICE_BASE: 'Price base field empty',
+        STOCK: 'Stock field empty',
+        UNIT: 'Unit field empty',
+        PRODUCT_NUMBER: 'Product number field empty',
+      }
+      if (!this.product.NAME || !this.product.PRICE || !this.product.PRICE_GRAU
+          || this.product.PRICE_BASE || !this.product.STOCK || !this.product.PRODUCT_NUMBER) {
+        const keys = Object.keys(this.product).filter((key) => this.product[key] === '');
+        this.errors = keys.map((require) => requireText[require]);
+      }
+      return !this.errors.length > 0;
     }
   }
 }
@@ -162,16 +216,19 @@ export default {
   padding: 20px 0;
   width: calc(100% - 90px);
 }
-.products-option_items{
+
+.products-option_items {
   display: flex;
 }
+
 .products-option_items,
 .products-list_item {
   text-align: center;
   align-items: center;
   align-content: center;
 }
-.products-option_items > div{
+
+.products-option_items > div {
   margin-right: 10px;
 }
 

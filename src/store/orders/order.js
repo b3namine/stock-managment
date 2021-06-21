@@ -32,8 +32,13 @@ const actions = {
 		context.commit('SET_ORDERS', orders);
 	},
 	NEW_ORDER: (context, payload) => {
-		const orders = window.ipcRenderer.sendSync('insert-order', JSON.stringify(payload))[0]
-		context.commit('NEW_ORDER', orders);
+		const orders = window.ipcRenderer.sendSync('insert-order', JSON.stringify(payload));
+		console.error(orders);
+		if (!orders) {
+			console.error('Error empty values')
+			return;
+		}
+		context.commit('NEW_ORDER', orders[0]);
 	},
 	EDIT_ORDER: (context, payload) => {
 		const newOrder = window.ipcRenderer.sendSync('edit-order', JSON.stringify(payload));

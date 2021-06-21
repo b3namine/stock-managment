@@ -1,15 +1,20 @@
 <template>
   <div class="users-container">
     <div class="users-option_items">
-      <div><el-button type="primary" icon="el-icon-plus"  @click="isModalVisible = true"> Add user</el-button></div>
-      <div v-if="selected.length > 0"><el-button  type="danger" icon="el-icon-delete" @click="deleteUsers">({{ selected.length }})</el-button></div>
-      <div><el-input
-          placeholder="Search..."
-          prefix-icon="el-icon-search"
-          v-model="search">
-      </el-input></div>
+      <div>
+        <el-button type="primary" icon="el-icon-plus" @click="isModalVisible = true"> Add user</el-button>
+      </div>
+      <div v-if="selected.length > 0">
+        <el-button type="danger" icon="el-icon-delete" @click="deleteUsers">({{ selected.length }})</el-button>
+      </div>
+      <div>
+        <el-input
+            placeholder="Search..."
+            prefix-icon="el-icon-search"
+            v-model="search">
+        </el-input>
+      </div>
     </div>
-
     <el-table
         :data="userSearch"
         stripe
@@ -58,14 +63,27 @@
         </template>
       </el-table-column>
     </el-table>
-    <Modal v-show="isModalVisible" @close="modalType = 0; isModalVisible = false;client = {}">
-      <input type="text" placeholder="name..." v-model="client.NAME"/>
-      <input type="tel" placeholder="phone..." v-model="client.PHONE"/>
-      <input type="email" placeholder="email..." v-model="client.EMAIL"/>
-      <input type="date" placeholder="birthday..." v-model="client.BIRTHDAY"/>
-      <button @click="modalType === 0 ? insertUser(): saveEditClient()">
-        {{ modalType === 0 ? 'add' : 'save' }}
-      </button>
+    <Modal :model="isModalVisible" :title="modalType === 0 ? 'Add new user' : 'Edit user'" @close="closeModal">
+      <el-form ref="client" :model="client" label-width="120px">
+        <el-form-item label="Client name">
+          <el-input v-model="client.NAME"></el-input>
+        </el-form-item>
+        <el-form-item label="Client phone">
+          <el-input v-model="client.PHONE"></el-input>
+        </el-form-item>
+        <el-form-item label="Client email">
+          <el-input v-model="client.EMAIL"></el-input>
+        </el-form-item>
+        <el-form-item label="Client birthday">
+          <el-input v-model="client.BIRTHDAY"></el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="modalType === 0 ? insertUser(): saveEditClient()">
+            {{ modalType === 0 ? 'Add' : 'Save' }}
+          </el-button>
+          <el-button @click="closeModal">Cancel</el-button>
+        </el-form-item>
+      </el-form>
     </Modal>
   </div>
 
@@ -98,7 +116,12 @@ export default {
   },
   methods: {
     handleSelectionChange(selected) {
-      this.selected = selected.map((select)=> select.ID);
+      this.selected = selected.map((select) => select.ID);
+    },
+    closeModal() {
+      this.modalType = 0;
+      this.isModalVisible = false;
+      this.client = {}
     },
     insertUser() {
       this.$store.dispatch('NEW_CLIENT', this.client);
@@ -176,6 +199,7 @@ export default {
   font-weight: bold;
   color: #000;
 }
+
 .users-option_items,
 .users-option-list {
   display: flex;
@@ -183,7 +207,8 @@ export default {
   align-items: center;
   align-content: center;
 }
-.users-option_items div{
+
+.users-option_items div {
   margin-right: 10px;
 }
 

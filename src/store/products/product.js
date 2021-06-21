@@ -32,6 +32,9 @@ const actions = {
 	},
 	NEW_PRODUCT: (context, payload) => {
 		const products = window.ipcRenderer.sendSync('insert-product', JSON.stringify(payload))[0]
+		if (!products) {
+			return;
+		}
 		context.commit('NEW_PRODUCT', products);
 	},
 	EDIT_PRODUCT: (context, payload) => {

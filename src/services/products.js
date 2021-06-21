@@ -13,6 +13,12 @@ export const getAllProducts = async (event) => {
 export const insertProduct = async (event, data) => {
 	try {
 		const product = JSON.parse(data);
+		if (!product.NAME || !product.PRICE_BASE
+			|| !product.PRICE_GRAU || !product.PRICE
+			|| !product.UNIT || !product.STOCK
+			|| !product.PRODUCT_NUMBER) {
+			return;
+		}
 		const newProductId = await knex.insert(
 			{
 				...product,
